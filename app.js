@@ -1,81 +1,31 @@
-// ========================================
-// VaaniShield - Application JavaScript
-// AI-Powered Vernacular Content Moderation
-// ========================================
-
-// Sample Data
 const contacts = [
-    { id: 1, name: "Rahul Sharma", avatar: "👨‍💻", lastMessage: "Hey, how are you?", time: "Now", unread: 2, online: true },
-    { id: 2, name: "Priya Patel", avatar: "👩", lastMessage: "See you tomorrow!", time: "5m", unread: 0, online: false },
-    { id: 3, name: "Tech Team", avatar: "💻", lastMessage: "Meeting at 3pm", time: "1h", unread: 5, isGroup: true, online: true },
-    { id: 4, name: "Family Group", avatar: "👨‍👩‍👧‍👦", lastMessage: "Mom: Dinner at 8", time: "2h", unread: 0, isGroup: true },
-    { id: 5, name: "Amit Kumar", avatar: "👦", lastMessage: "Thanks buddy!", time: "Yesterday", unread: 0, online: true }
+    { id: 1, name: "Rahul Sharma", avatar: "👨‍💻", lastMessage: "", time: "Now", unread: 2, online: true },
+    { id: 2, name: "Priya Patel", avatar: "👩", lastMessage: "", time: "5m", unread: 0, online: false },
+    { id: 3, name: "Tech Team", avatar: "💻", lastMessage: "", time: "1h", unread: 5, isGroup: true, online: true },
+    { id: 4, name: "Family Group", avatar: "👨‍👩‍👧‍👦", lastMessage: "", time: "2h", unread: 0, isGroup: true },
+    { id: 5, name: "Amit Kumar", avatar: "👦", lastMessage: "", time: "Yesterday", unread: 0, online: true }
 ];
 
-// Chat messages storage
-const chatMessages = {
-    1: [
-        { id: 1, text: "Hey! How's it going?", sent: false, time: "10:30 AM" },
-        { id: 2, text: "Hi Rahul! I'm doing great, thanks for asking!", sent: true, time: "10:31 AM", status: "read" },
-        { id: 3, text: "That's awesome! Working on any cool projects?", sent: false, time: "10:32 AM" },
-        { id: 4, text: "Yes! I'm building a chat app with AI moderation 🚀", sent: true, time: "10:33 AM", status: "read" },
-        { id: 5, text: "Hey, how are you?", sent: false, time: "10:35 AM" }
-    ],
-    2: [
-        { id: 1, text: "Hi Priya!", sent: true, time: "Yesterday", status: "read" },
-        { id: 2, text: "Hey! Want to catch up tomorrow?", sent: false, time: "Yesterday" },
-        { id: 3, text: "Sure! Let's meet at the cafe", sent: true, time: "Yesterday", status: "read" },
-        { id: 4, text: "See you tomorrow!", sent: false, time: "Yesterday" }
-    ],
-    3: [
-        { id: 1, text: "Team, we have a meeting at 3pm", sent: false, time: "1h ago", sender: "Manager" },
-        { id: 2, text: "Got it! I'll be there", sent: true, time: "1h ago", status: "read" },
-        { id: 3, text: "Meeting at 3pm", sent: false, time: "1h ago", sender: "Lead" }
-    ],
-    4: [
-        { id: 1, text: "What time is dinner?", sent: true, time: "2h ago", status: "read" },
-        { id: 2, text: "Dinner at 8", sent: false, time: "2h ago", sender: "Mom" }
-    ],
-    5: [
-        { id: 1, text: "Hey Amit! Can you help me with something?", sent: true, time: "Yesterday", status: "read" },
-        { id: 2, text: "Sure, what do you need?", sent: false, time: "Yesterday" },
-        { id: 3, text: "I need your feedback on my project", sent: true, time: "Yesterday", status: "read" },
-        { id: 4, text: "Thanks buddy!", sent: false, time: "Yesterday" }
-    ]
+const firebaseConfig = {
+    apiKey: "AIzaSyCbGP_iFbc9Tjrp1tToHkrk62Eza0YowYg",
+    authDomain: "http://vannishield.firebaseapp.com",
+    databaseURL: "https://vannishield-default-rtdb.firebaseio.com/",
+    projectId: "vannishield",
 };
 
-// Harmful content patterns (vernacular examples)
-const harmfulPatterns = [
-    // Hindi slurs
-    /\b(bevkoof|gadha|kutta|kamina|harami|chutiya|madarch[o0]d|bhench[o0]d)\b/gi,
-    // Tamil slurs
-    /\b(poda|patti|naai|otha)\b/gi,
-    // Telugu slurs
-    /\b(dengey|lanja)\b/gi,
-    // Common English
-    /\b(idiot|stupid|dumb|hate you|kill yourself|die)\b/gi,
-    // Threats
-    /\b(i will kill|murder|attack|bomb|threat)\b/gi
-];
+// Initialize Firebase
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
+const db = firebase.database();
 
-// Auto-reply responses
-const autoReplies = [
-    "That's interesting! Tell me more.",
-    "I see what you mean!",
-    "Thanks for sharing that!",
-    "That sounds great!",
-    "I appreciate you reaching out!",
-    "Got it! Let me think about that.",
-    "Interesting perspective!",
-    "I'll get back to you on that.",
-    "Makes sense to me!",
-    "Thanks for the update!"
-];
-
-// State
+// State Management
+let chatMessages = {}; 
 let currentChat = null;
 let currentFilter = 'all';
-let pendingMessage = null;
+let pendingMessageKey = null; // Store Firebase key of flagged message
+let activeListener = null;
+const CURRENT_USER_ID = "user_1"; // Hardcoded for demo - replace with actual auth
 
 // DOM Elements
 const themeToggle = document.getElementById('themeToggle');
@@ -119,15 +69,13 @@ function toggleTheme() {
     localStorage.setItem('vaanishield-theme', isDark ? 'light' : 'dark');
 }
 
-// Render Contacts
+// Render Contacts List
 function renderContacts(searchQuery = '') {
     let filteredContacts = contacts.filter(contact => {
         const matchesSearch = contact.name.toLowerCase().includes(searchQuery.toLowerCase());
-        
         if (currentFilter === 'all') return matchesSearch;
         if (currentFilter === 'unread') return matchesSearch && contact.unread > 0;
         if (currentFilter === 'groups') return matchesSearch && contact.isGroup;
-        
         return matchesSearch;
     });
 
@@ -143,31 +91,28 @@ function renderContacts(searchQuery = '') {
                     <span class="contact-time">${contact.time}</span>
                 </div>
                 <div class="contact-footer">
-                    <span class="contact-last-message">${contact.lastMessage}</span>
+                    <span class="contact-last-message">${contact.lastMessage || 'Start conversation'}</span>
                     ${contact.unread > 0 ? `<span class="unread-badge">${contact.unread}</span>` : ''}
                 </div>
             </div>
         </div>
     `).join('');
 
-    // Add click listeners
     document.querySelectorAll('.contact-item').forEach(item => {
         item.addEventListener('click', () => openChat(parseInt(item.dataset.id)));
     });
 }
 
-// Open Chat
+// Open Chat Window
 function openChat(contactId) {
     currentChat = contactId;
     const contact = contacts.find(c => c.id === contactId);
-    
     if (!contact) return;
 
     // Update UI
     emptyState.classList.add('hidden');
     activeChat.classList.remove('hidden');
     
-    // Update header
     chatAvatar.textContent = contact.avatar;
     chatUserName.textContent = contact.name;
     userStatus.textContent = contact.online ? 'Online' : 'Last seen recently';
@@ -179,68 +124,156 @@ function openChat(contactId) {
         onlineIndicator.style.display = 'none';
     }
 
-    // Update typing avatar
     typingAvatar.textContent = contact.avatar;
-
-    // Clear unread
     contact.unread = 0;
 
-    // Render messages
-    renderMessages(contactId);
+    // Remove old listener if exists
+    if (activeListener) {
+        activeListener.off();
+    }
 
-    // Update contacts list
+    setupRealtimeListener(contactId);
+
     renderContacts(searchInput.value);
-
-    // Update safety status
-    updateSafetyBar();
-
-    // Focus input
     messageInput.focus();
 
-    // Mobile: Add chat-open class
+    // Mobile responsive
     document.querySelector('.sidebar').classList.add('chat-open');
     document.querySelector('.chat-window').classList.add('chat-open');
+}
+
+// REALTIME LISTENER - Listens to Firebase changes
+function setupRealtimeListener(chatId) {
+    const chatRef = db.ref(`chats/${chatId}/messages`);
+    
+    activeListener = chatRef;
+    
+    // Listen for any changes in messages
+    chatRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        
+        if (!data) {
+            chatMessages[chatId] = [];
+            renderMessages(chatId);
+            return;
+        }
+
+        // Convert Firebase object to array with keys
+        const messages = Object.keys(data).map(key => ({
+            ...data[key],
+            firebaseKey: key // Store the Firebase key for later updates
+        }));
+
+        // Sort by timestamp
+        messages.sort((a, b) => a.timestamp - b.timestamp);
+        
+        chatMessages[chatId] = messages;
+        renderMessages(chatId);
+        updateSafetyBar();
+        
+        // Update contact list preview
+        const contact = contacts.find(c => c.id === chatId);
+        if (contact && messages.length > 0) {
+            const lastMsg = messages[messages.length - 1];
+            contact.lastMessage = lastMsg.text.substring(0, 30) + (lastMsg.text.length > 30 ? '...' : '');
+            contact.time = 'Now';
+            renderContacts(searchInput.value);
+        }
+
+        // Check if any message was just flagged by Django
+        checkForNewlyFlaggedMessages(messages);
+    });
+}
+
+// Check if Django just flagged a message
+function checkForNewlyFlaggedMessages(messages) {
+    messages.forEach(msg => {
+        // If message is from current user, status changed to flagged, and modal not already shown
+        if (msg.sender === CURRENT_USER_ID && 
+            msg.status === 'flagged' && 
+            !msg.modal_shown) {
+            
+            // Mark that we've shown the modal for this message
+            db.ref(`chats/${currentChat}/messages/${msg.firebaseKey}`).update({
+                modal_shown: true
+            });
+
+            // Show warning modal
+            showFlaggedModal(msg);
+        }
+    });
+}
+
+// Show Modal for Flagged Message
+function showFlaggedModal(message) {
+    pendingMessageKey = message.firebaseKey;
+    
+    modalMessage.textContent = "⚠️ AI detected potentially harmful content";
+    detectedContent.textContent = message.reason 
+        ? `${message.reason}`
+        : 'Potentially harmful language detected';
+    
+    modalOverlay.classList.remove('hidden');
 }
 
 // Render Messages
 function renderMessages(contactId) {
     const messages = chatMessages[contactId] || [];
     
-    messagesArea.innerHTML = messages.map(message => `
-        <div class="message ${message.sent ? 'sent' : 'received'}">
-            <div class="message-bubble ${message.flagged ? 'flagged' : ''}">
-                ${message.sender ? `<div class="message-sender">${message.sender}</div>` : ''}
-                <div class="message-text">${message.text}</div>
-                <div class="message-meta">
-                    <span class="message-time">${message.time}</span>
-                    ${message.sent ? `
-                        <span class="message-status">
-                            ${message.status === 'read' ? '✓✓' : '✓'}
-                        </span>
-                    ` : ''}
+    messagesArea.innerHTML = messages.map(message => {
+        let statusIcon = '✓'; 
+        let bubbleClass = '';
+        
+        // Determine status icon
+        if (message.status === 'pending') {
+            statusIcon = '🕒'; // Waiting for moderation
+        } else if (message.status === 'flagged') {
+            statusIcon = '⚠️'; // Flagged by AI
+            bubbleClass = 'flagged';
+        } else if (message.status === 'approved' || message.status === 'forced') {
+            statusIcon = '✓✓'; // Approved or force-sent
+        }
+
+        const isSent = message.sender === CURRENT_USER_ID;
+
+        return `
+            <div class="message ${isSent ? 'sent' : 'received'}">
+                <div class="message-bubble ${bubbleClass}">
+                    <div class="message-text">${message.text}</div>
+                    <div class="message-meta">
+                        <span class="message-time">${formatTimestamp(message.timestamp)}</span>
+                        ${isSent ? `<span class="message-status">${statusIcon}</span>` : ''}
+                    </div>
+                    ${message.status === 'flagged' && message.reason ? 
+                        `<div class="warning-label">${message.reason}</div>` 
+                        : ''}
                 </div>
             </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 
-    // Scroll to bottom
     messagesArea.scrollTop = messagesArea.scrollHeight;
 }
 
-// Content Moderation
-function checkContent(text) {
-    for (const pattern of harmfulPatterns) {
-        if (pattern.test(text)) {
-            return { harmful: true, match: text.match(pattern)?.[0] };
-        }
-    }
-    return { harmful: false };
+// Format Timestamp
+function formatTimestamp(timestamp) {
+    if (!timestamp) return '';
+    
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diff = now - date;
+    
+    if (diff < 60000) return 'Now';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+    if (diff < 86400000) return date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    
+    return date.toLocaleDateString();
 }
 
 // Update Safety Bar
 function updateSafetyBar() {
     const messages = chatMessages[currentChat] || [];
-    const hasHarmful = messages.some(m => m.flagged);
+    const hasHarmful = messages.some(m => m.status === 'flagged');
 
     if (hasHarmful) {
         safetyBar.className = 'safety-bar glass-danger';
@@ -250,7 +283,7 @@ function updateSafetyBar() {
                 <line x1="12" y1="9" x2="12" y2="13"></line>
                 <line x1="12" y1="17" x2="12.01" y2="17"></line>
             </svg>
-            <span>Warning: Potentially harmful content detected in this conversation</span>
+            <span>Warning: Potentially harmful content detected</span>
         `;
     } else {
         safetyBar.className = 'safety-bar glass-safe';
@@ -264,101 +297,67 @@ function updateSafetyBar() {
     }
 }
 
-// Send Message
-function sendMessage(text, forcesSend = false) {
+// Send Message to Firebase
+function sendMessage(text) {
     if (!text.trim() || !currentChat) return;
 
-    const moderation = checkContent(text);
+    const trimmedText = text.trim();
 
-    if (moderation.harmful && !forcesSend) {
-        // Show modal
-        pendingMessage = text;
-        detectedContent.textContent = `Detected: "${moderation.match}"`;
-        modalOverlay.classList.remove('hidden');
-        return;
-    }
-
-    const messages = chatMessages[currentChat] || [];
-    const newMessage = {
-        id: messages.length + 1,
-        text: text,
-        sent: true,
-        time: getCurrentTime(),
-        status: 'sent',
-        flagged: moderation.harmful
-    };
-
-    messages.push(newMessage);
-    chatMessages[currentChat] = messages;
-
-    // Update contact's last message
-    const contact = contacts.find(c => c.id === currentChat);
-    if (contact) {
-        contact.lastMessage = text.substring(0, 30) + (text.length > 30 ? '...' : '');
-        contact.time = 'Now';
-    }
-
-    // Render
-    renderMessages(currentChat);
-    renderContacts(searchInput.value);
-    updateSafetyBar();
-
-    // Clear input
-    messageInput.value = '';
-
-    // Trigger auto-reply
-    if (!moderation.harmful) {
-        simulateReply();
-    }
-}
-
-// Get Current Time
-function getCurrentTime() {
-    const now = new Date();
-    return now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-}
-
-// Simulate Reply
-function simulateReply() {
-    // Show typing indicator
-    typingIndicator.classList.remove('hidden');
+    // Create new message in Firebase
+    const newMessageRef = db.ref(`chats/${currentChat}/messages`).push();
     
-    // Random delay between 1-3 seconds
-    const delay = 1000 + Math.random() * 2000;
+    newMessageRef.set({
+        id: newMessageRef.key,           // Firebase auto-generated key
+        text: trimmedText,
+        sender: CURRENT_USER_ID,
+        timestamp: Date.now(),
+        status: "pending",               // Django watches for "pending" status
+        is_flagged: false
+    })
+    .then(() => {
+        console.log('Message sent to Firebase');
+        messageInput.value = '';
+    })
+    .catch((error) => {
+        console.error('Error sending message:', error);
+        alert('Failed to send message. Please try again.');
+    });
+}
 
-    setTimeout(() => {
-        typingIndicator.classList.add('hidden');
+// Force Send (User approves flagged message)
+function forceSendMessage() {
+    if (!pendingMessageKey || !currentChat) return;
 
-        const messages = chatMessages[currentChat] || [];
-        const reply = autoReplies[Math.floor(Math.random() * autoReplies.length)];
-        
-        const newMessage = {
-            id: messages.length + 1,
-            text: reply,
-            sent: false,
-            time: getCurrentTime()
-        };
+    // Update the message status to "forced" (approved by user)
+    db.ref(`chats/${currentChat}/messages/${pendingMessageKey}`).update({
+        status: 'forced',
+        force_send: true,
+        approved_at: Date.now()
+    })
+    .then(() => {
+        console.log('Message approved by user');
+        modalOverlay.classList.add('hidden');
+        pendingMessageKey = null;
+    })
+    .catch((error) => {
+        console.error('Error approving message:', error);
+    });
+}
 
-        messages.push(newMessage);
-        chatMessages[currentChat] = messages;
+// Delete Flagged Message
+function deleteMessage() {
+    if (!pendingMessageKey || !currentChat) return;
 
-        // Update contact
-        const contact = contacts.find(c => c.id === currentChat);
-        if (contact) {
-            contact.lastMessage = reply.substring(0, 30) + (reply.length > 30 ? '...' : '');
-            contact.time = 'Now';
-        }
-
-        // Render
-        renderMessages(currentChat);
-        renderContacts(searchInput.value);
-
-        // Mark previous message as read
-        const lastSentIdx = messages.findIndex(m => m.sent && m.status === 'sent');
-        if (lastSentIdx !== -1) {
-            messages[lastSentIdx].status = 'read';
-        }
-    }, delay);
+    // Delete the message from Firebase
+    db.ref(`chats/${currentChat}/messages/${pendingMessageKey}`).remove()
+    .then(() => {
+        console.log('Message deleted');
+        modalOverlay.classList.add('hidden');
+        pendingMessageKey = null;
+    })
+    .catch((error) => {
+        console.error('Error deleting message:', error);
+    });
 }
 
 // Setup Event Listeners
@@ -367,10 +366,13 @@ function setupEventListeners() {
     themeToggle.addEventListener('click', toggleTheme);
 
     // Send message
-    sendBtn.addEventListener('click', () => sendMessage(messageInput.value));
+    sendBtn.addEventListener('click', () => {
+        sendMessage(messageInput.value);
+    });
     
     messageInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
             sendMessage(messageInput.value);
         }
     });
@@ -390,33 +392,46 @@ function setupEventListeners() {
         });
     });
 
-    // Modal actions
+    // Modal - Cancel (Delete message)
     modalCancel.addEventListener('click', () => {
-        modalOverlay.classList.add('hidden');
-        pendingMessage = null;
+        deleteMessage();
     });
 
+    // Modal - Send Anyway (Force send)
     modalSend.addEventListener('click', () => {
-        modalOverlay.classList.add('hidden');
-        if (pendingMessage) {
-            sendMessage(pendingMessage, true);
-            pendingMessage = null;
-        }
+        forceSendMessage();
     });
 
     // Close modal on overlay click
     modalOverlay.addEventListener('click', (e) => {
         if (e.target === modalOverlay) {
-            modalOverlay.classList.add('hidden');
-            pendingMessage = null;
+            deleteMessage();
         }
     });
 
     // Escape key to close modal
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && !modalOverlay.classList.contains('hidden')) {
-            modalOverlay.classList.add('hidden');
-            pendingMessage = null;
+            deleteMessage();
         }
     });
 }
+
+// Add dynamic styles
+const style = document.createElement('style');
+style.textContent = `
+    .warning-label {
+        font-size: 11px;
+        color: var(--danger);
+        margin-top: 4px;
+        font-weight: 500;
+    }
+    
+    .message-sender {
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 4px;
+        opacity: 0.8;
+    }
+`;
+document.head.appendChild(style);
