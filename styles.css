@@ -45,6 +45,21 @@
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.message-bubble.flagged {
+    background-color: rgba(255, 0, 0, 0.1);
+    border-left: 3px solid red;
+}
+
+.safety-bar.glass-danger {
+    background: rgba(255, 0, 0, 0.1);
+    color: red;
+}
+
+.safety-bar.glass-safe {
+    background: rgba(0, 255, 0, 0.1);
+    color: green;
+}
+
 /* Base Reset */
 *, *::before, *::after {
     margin: 0;
@@ -644,6 +659,9 @@ body.light-mode {
     flex: 1;
     display: flex;
     flex-direction: column;
+    height: 100%;    
+    max-height: 100%;  
+    overflow: hidden;   
 }
 
 .hidden {
@@ -652,12 +670,11 @@ body.light-mode {
 
 /* Chat Header */
 .chat-header {
+    flex-shrink: 0;     
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 12px 20px;
-    border-radius: 0;
-    border: none;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -733,6 +750,7 @@ body.light-mode {
 .messages-area {
     flex: 1;
     overflow-y: auto;
+    min-height: 0;
     padding: 20px;
     display: flex;
     flex-direction: column;
@@ -901,6 +919,8 @@ body.light-mode {
 
 /* Message Composer */
 .message-composer {
+    flex-shrink: 0;
+    z-index: 10 ;
     display: flex;
     align-items: center;
     gap: 8px;

@@ -8,7 +8,7 @@ model = AutoModelForSequenceClassification.from_pretrained("Hate-speech-CNERG/in
 
 def predict(text):
     inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True)
-    outputs = model(inputs)
+    outputs = model(**inputs)
     probs = torch.softmax(outputs.logits, dim=1)
     label_id = torch.argmax(probs).item()
     confidence = probs[0][label_id].item()
