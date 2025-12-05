@@ -917,6 +917,21 @@ body.light-mode {
     }
 }
 
+.message-bubble.flagged {
+    background-color: rgba(255, 0, 0, 0.1);
+    border-left: 3px solid red;
+}
+
+.safety-bar.glass-danger {
+    background: rgba(255, 0, 0, 0.1);
+    color: red;
+}
+
+.safety-bar.glass-safe {
+    background: rgba(0, 255, 0, 0.1);
+    color: green;
+}
+
 /* Message Composer */
 .message-composer {
     flex-shrink: 0;
