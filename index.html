@@ -3,199 +3,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VaaniShield - AI-Powered Vernacular Content Moderation</title>
-    <meta name="description" content="VaaniShield - WhatsApp-style chat with AI-powered vernacular content moderation featuring cosmic galaxy theme and Apple glassmorphism.">
+    <title>VaaniShield - Secure Chat</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
 <body class="dark-mode">
-    <!-- Galaxy Background -->
     <div class="galaxy-bg">
         <div class="stars"></div>
         <div class="stars2"></div>
         <div class="stars3"></div>
-        <div class="gradient-overlay"></div>
     </div>
 
-    <!-- Main App Container -->
-    <div class="app-container">
-        <!-- Top Bar -->
-        <header class="top-bar glass">
-            <div class="logo-section">
-                <img src="logo-dark.png" alt="VaaniShield" class="logo-img dark-logo">
-                <img src="logo-light.png" alt="VaaniShield" class="logo-img light-logo">
+    <!-- Login Overlay -->
+    <div id="loginOverlay" class="login-overlay">
+        <div class="glass-modal login-modal">
+            <div class="logo-large">
+                <div class="logo-wrapper-large">
+                    <img src="assets/logo-light.jpeg" alt="VaaniShield" class="logo-img-large">
+                    <div class="logo-glow"></div>
+                </div>
+                <h1>VaaniShield</h1>
+                <p>Secure, Real-time Communication</p>
+            </div>
+            <div class="login-form">
+                <div class="input-group">
+                    <input type="text" id="usernameInput" placeholder="Enter your name to join..." autocomplete="off">
+                </div>
+                <button id="joinBtn" class="join-btn">
+                    Join Chat
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container blurred-bg" id="appContainer">
+        <div class="top-bar">
+            <div class="logo">
+                <div class="logo-wrapper">
+                    <img id="appLogo" src="assets/logo-light.jpeg" alt="VaaniShield" class="logo-img">
+                    <div class="logo-glow"></div>
+                </div>
                 <span class="logo-text">VaaniShield</span>
             </div>
-            <div class="header-actions">
-                <button class="glass-button theme-toggle" id="themeToggle" aria-label="Toggle theme">
-                    <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="5"></circle>
-                        <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
-                    </svg>
-                    <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-                    </svg>
-                </button>
-                <button class="glass-button" aria-label="Settings">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="3"></circle>
-                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                    </svg>
+            <div class="top-actions">
+                <div class="user-badge">
+                    <span class="user-dot"></span>
+                    <span id="currentUserDisplay">Guest</span>
+                </div>
+                <button id="themeToggle" class="glass-button" aria-label="Toggle Theme">
+                    <span class="theme-icon">🌙</span>
                 </button>
             </div>
-        </header>
+        </div>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Sidebar -->
-            <aside class="sidebar glass">
-                <div class="search-container">
-                    <div class="search-box glass-input">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <path d="M21 21l-4.35-4.35"></path>
-                        </svg>
-                        <input type="text" placeholder="Search or start new chat" id="searchInput">
-                    </div>
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="search-bar">
+                    <input type="text" id="searchInput" placeholder="Search active users...">
                 </div>
                 
-                <div class="filter-tabs">
-                    <button class="filter-tab glass-chip active" data-filter="all">All</button>
-                    <button class="filter-tab glass-chip" data-filter="unread">Unread</button>
-                    <button class="filter-tab glass-chip" data-filter="groups">Groups</button>
+                <div class="sidebar-header">
+                    <h3>Active Users</h3>
+                    <span class="live-badge">LIVE</span>
                 </div>
 
-                <div class="contacts-list" id="contactsList">
-                    <!-- Contacts will be rendered by JS -->
+                <div id="contactsList" class="contacts-list">
+                    <!-- Users will be injected here -->
                 </div>
-            </aside>
+            </div>
 
-            <!-- Chat Window -->
-            <section class="chat-window" id="chatWindow">
-                <!-- Empty State -->
-                <div class="empty-state" id="emptyState">
-                    <div class="empty-icon">
-                        <img src="logo-dark.png" alt="VaaniShield" class="empty-logo dark-logo">
-                        <img src="logo-light.png" alt="VaaniShield" class="empty-logo light-logo">
+            <div class="chat-window">
+                <div id="emptyState" class="empty-state">
+                    <div class="logo-wrapper medium">
+                        <img src="assets/logo-light.jpeg" alt="Logo" class="empty-logo">
+                        <div class="logo-glow"></div>
                     </div>
                     <h2>Welcome to VaaniShield</h2>
-                    <p>AI-powered vernacular content moderation</p>
-                    <p class="empty-subtitle">Select a conversation to start chatting safely</p>
+                    <p>Select a user from the sidebar to start chatting privately.</p>
+                    <p class="empty-subtitle">End-to-end secure messaging</p>
                 </div>
 
-                <!-- Active Chat -->
-                <div class="active-chat hidden" id="activeChat">
-                    <!-- Chat Header -->
-                    <div class="chat-header glass">
+                <div id="activeChat" class="active-chat hidden">
+                    <div class="chat-header">
                         <div class="chat-user-info">
+                            <button id="backBtn" class="glass-button mobile-only">←</button>
                             <div class="avatar-wrapper">
-                                <span class="chat-avatar" id="chatAvatar">👨‍💻</span>
-                                <span class="online-indicator" id="onlineIndicator"></span>
+                                <span id="chatAvatar" class="chat-avatar"></span>
+                                <span id="onlineIndicator" class="online-indicator"></span>
                             </div>
                             <div class="user-details">
-                                <h3 id="chatUserName">Rahul Sharma</h3>
-                                <span class="user-status" id="userStatus">Online</span>
+                                <h3 id="chatUserName">User Name</h3>
+                                <span id="userStatus" class="user-status">Online</span>
                             </div>
                         </div>
-                        <div class="chat-actions">
-                            <button class="glass-button" aria-label="Video call">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polygon points="23 7 16 12 23 17 23 7"></polygon>
-                                    <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
-                                </svg>
-                            </button>
-                            <button class="glass-button" aria-label="Voice call">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                                </svg>
-                            </button>
-                            <button class="glass-button" aria-label="More options">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="12" cy="12" r="1"></circle>
-                                    <circle cx="19" cy="12" r="1"></circle>
-                                    <circle cx="5" cy="12" r="1"></circle>
-                                </svg>
-                            </button>
+                    </div>
+
+                    <div id="messagesArea" class="messages-area">
+                        <!-- Messages will be injected here -->
+                    </div>
+
+                    <div class="message-composer">
+                        <div class="input-wrapper">
+                            <input type="text" id="messageInput" placeholder="Type a secure message...">
                         </div>
-                    </div>
-
-                    <!-- Safety Bar -->
-                    <div class="safety-bar glass-safe" id="safetyBar">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                            <polyline points="9 12 11 14 15 10"></polyline>
-                        </svg>
-                        <span>Conversation is safe - No harmful content detected</span>
-                    </div>
-
-                    <!-- Messages Area -->
-                    <div class="messages-area" id="messagesArea">
-                        <!-- Messages will be rendered by JS -->
-                    </div>
-
-                    <!-- Typing Indicator -->
-                    <div class="typing-indicator glass hidden" id="typingIndicator">
-                        <span class="typing-avatar" id="typingAvatar">👨‍💻</span>
-                        <div class="typing-dots">
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                        </div>
-                    </div>
-
-                    <!-- Message Composer -->
-                    <div class="message-composer glass">
-                        <button class="glass-button emoji-btn" aria-label="Emoji">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
-                                <line x1="9" y1="9" x2="9.01" y2="9"></line>
-                                <line x1="15" y1="9" x2="15.01" y2="9"></line>
-                            </svg>
-                        </button>
-                        <button class="glass-button attach-btn" aria-label="Attach">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
-                            </svg>
-                        </button>
-                        <div class="input-wrapper glass-input">
-                            <input type="text" placeholder="Type a message..." id="messageInput">
-                        </div>
-                        <button class="glass-button send-btn" id="sendBtn" aria-label="Send">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <button id="sendBtn" class="send-btn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <line x1="22" y1="2" x2="11" y2="13"></line>
                                 <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                             </svg>
                         </button>
                     </div>
                 </div>
-            </section>
-        </main>
-    </div>
-
-    <!-- Moderation Alert Modal -->
-    <div class="modal-overlay hidden" id="modalOverlay">
-        <div class="modal glass-modal" id="moderationModal">
-            <div class="modal-header">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                    <line x1="12" y1="9" x2="12" y2="13"></line>
-                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                </svg>
-                <h3>Content Warning</h3>
-            </div>
-            <div class="modal-body">
-                <p id="modalMessage">Potentially harmful content has been detected in this message.</p>
-                <div class="detected-content" id="detectedContent"></div>
-            </div>
-            <div class="modal-actions">
-                <button class="glass-button modal-btn secondary" id="modalCancel">Don't Send</button>
-                <button class="glass-button modal-btn primary" id="modalSend">Send Anyway</button>
             </div>
         </div>
     </div>
